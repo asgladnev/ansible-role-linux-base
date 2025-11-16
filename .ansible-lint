@@ -1,0 +1,6 @@
+# .ansible-lint
+exclude_paths:
+  - .pre-commit-config.yaml
+skip_list:
+  - var-naming[no-role-prefix]
+  - yaml[line-length]
