@@ -1,0 +1,47 @@
+---
+- name: "Validation"
+  tags: [always]
+  block:
+    - name: "Validation: merge sysctl_settings and sysctl_settings_override"
+      ansible.builtin.set_fact:
+        sysctl_settings: "{{ sysctl_settings | combine(sysctl_settings_override | default({})) }}"
+
+    - name: "Validation: sysctl_settings"
+      ansible.builtin.assert:
+        that:
+          - sysctl_settings is defined
+          - sysctl_settings is mapping
+          - sysctl_settings | dict2items | selectattr('value','defined') | list | length > 0
+        success_msg: "'sysctl_settings' is valid"
+        fail_msg: |
+          'sysctl_settings' must be a dictionary with correct keys and types
+          Got: '{{ sysctl_settings | type_debug }}'
+          Length: '{{ sysctl_settings | length }}'
+          Value: '{{ sysctl_settings | to_nice_yaml }}'
+
+
+- name: "Configure sysctl"
+  tags: [sysctl, security]
+  block:
+    - name: "Configure sysctl"
+      ansible.posix.sysctl:
+        name: "{{ item.key }}"
+        value: "{{ item.value }}"
+        sysctl_file: "/etc/sysctl.d/99-hardening.conf"
+        state: "present"
+        reload: true
+      loop: "{{ sysctl_settings | dict2items }}"
+
+    - name: "Configure sysctl: verify config"
+      block:
+        - name: "Configure sysctl: verify config: syntax"
+          ansible.builtin.command: "sysctl -a"
+          register: cmd_sysctl_config
+          changed_when: false
+          failed_when: cmd_sysctl_config.rc != 0
+          check_mode: true
+
+        - name: "Configure sysctl: verify config: debug"
+          ansible.builtin.debug:
+            msg: "{{ cmd_sysctl_config.stdout | default('No output') }}"
+          when: debug | default(false) | bool

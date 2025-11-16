@@ -1,0 +1,70 @@
+---
+- name: "Validation"
+  tags: [always]
+  block:
+    - name: "Validation: merge sshd_config and sshd_config_override"
+      ansible.builtin.set_fact:
+        sshd_config: "{{ sshd_config | combine(sshd_config_override | default({})) }}"
+
+    - name: "Validation: sshd_config"
+      ansible.builtin.assert:
+        that:
+          - sshd_config is defined
+          - sshd_config is mapping
+          - sshd_config.port is integer
+          - sshd_config.port >= 1 and sshd_config.port <= 65535
+          - sshd_config.log_level is string
+          - sshd_config.log_level in ["QUIET","FATAL","ERROR","INFO","VERBOSE","DEBUG","DEBUG1","DEBUG2","DEBUG3"]
+          - sshd_config.login_grace_time is string
+          - sshd_config.permit_root_login is boolean
+          - sshd_config.max_auth_tries is integer
+          - sshd_config.password_authentication is boolean
+          - sshd_config.interactive_authentication is boolean
+          - sshd_config.pubkey_authentication is boolean
+          - sshd_config.authentication_methods in ["publickey", "password", "hostbased", "publickey"]
+          - sshd_config.use_pam is boolean
+          - sshd_config.x11_forwarding is boolean
+          - sshd_config.tcp_keep_alive is boolean
+          - sshd_config.print_last_log is boolean
+          - sshd_config.allow_tcp_forwarding is boolean
+          - sshd_config.allow_agent_forwarding is boolean
+          - sshd_config.strict_mode is boolean
+          - sshd_config.max_sessions is integer
+          - sshd_config.client_alive_interval is integer
+          - sshd_config.client_alive_count_max is integer
+          - sshd_config.max_startups is string
+        success_msg: "'sshd_config' is valid"
+        fail_msg: |
+          'sshd_config' must be a dictionary with correct keys and types
+          Got: '{{ sshd_config | type_debug }}'
+          Length: '{{ sshd_config | length }}'
+          Value: '{{ sshd_config | to_nice_yaml }}'
+
+
+- name: "Configure SSHd"
+  tags: [sshd, security]
+  block:
+    - name: "Configure SSHd: template"
+      ansible.builtin.template:
+        src: "ssh/sshd_config.j2"
+        dest: "/etc/ssh/sshd_config"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+        validate: "/usr/sbin/sshd -t -f %s"
+      register: ssh_config_changed
+      notify: "ssh.service configuration changed"
+
+    - name: "Configure SSHd: verify config"
+      block:
+        - name: "Configure SSHd: verify config: syntax"
+          ansible.builtin.command: "/usr/sbin/sshd -T"
+          register: cmd_sshd_config
+          changed_when: false
+          failed_when: cmd_sshd_config.rc != 0
+          check_mode: true
+
+        - name: "Configure SSHd: verify config: debug"
+          ansible.builtin.debug:
+            msg: "{{ cmd_sshd_config.stdout | default('No output') }}"
+          when: debug | default(false) | bool

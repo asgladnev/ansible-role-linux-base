@@ -1,0 +1,24 @@
+---
+- name: "Restart chrony.service"
+  become: true
+  ansible.builtin.service:
+    name: "chrony.service"
+    state: "restarted"
+    enabled: true
+  listen: "chrony.service configuration changed"
+
+- name: "Restart ssh.service"
+  become: true
+  ansible.builtin.service:
+    name: "ssh.serivce"
+    state: "restarted"
+    enabled: true
+  listen: "ssh.service configuration changed"
+
+- name: "Restart unattended-upgrades.service"
+  become: true
+  ansible.builtin.service:
+    name: "unattended-upgrades.service"
+    state: "restarted"
+    enabled: true
+  listen: "unattended-upgrades.service configuration changed"

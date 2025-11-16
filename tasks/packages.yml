@@ -1,0 +1,27 @@
+---
+- name: "Validation"
+  tags: [always]
+  block:
+    - name: "Validation: merge base_packages and base_packages_extra"
+      ansible.builtin.set_fact:
+        base_packages: "{{ base_packages + (base_packages_extra | default([])) | unique }}"
+
+    - name: "Validation: base_packages"
+      ansible.builtin.assert:
+        that:
+          - base_packages is defined
+          - base_packages | length > 0
+          - base_packages is iterable
+        success_msg: "'base_packages' is valid"
+        fail_msg: |
+          'base_packages' must be a non-empty list
+          Got: '{{ base_packages | type_debug }}'
+          Length: '{{ base_packages | length }}'
+          Value: '{{ base_packages | to_nice_yaml }}'
+
+
+- name: "Base linux packages install"
+  tags: [always, packages]
+  ansible.builtin.package:
+    name: "{{ base_packages }}"
+    state: "present"

@@ -1,0 +1,67 @@
+---
+- name: "Validation"
+  tags: [always]
+  block:
+    - name: "Validation: merge bash_config and bash_config_override"
+      ansible.builtin.set_fact:
+        bash_config: "{{ bash_config | combine(bash_config_override | default({})) }}"
+
+    - name: "Validation: bash_config"
+      ansible.builtin.assert:
+        that:
+          - bash_config is defined
+          - bash_config is mapping
+          - bash_config.histsize is integer
+          - bash_config.histfilesize is integer
+          - bash_config.histtimeformat is string
+          - bash_config.prompt_command is string
+        success_msg: "'bash_config' is valid"
+        fail_msg: |
+          'bash_config' must be a dictionary with correct keys and types
+          Got: '{{ bash_config | type_debug }}'
+          Length: '{{ bash_config | length }}'
+          Value: '{{ bash_config | to_nice_yaml }}'
+
+    - name: "Validation: bashrc_path"
+      ansible.builtin.assert:
+        that:
+          - bashrc_path is string
+          - bashrc_path | length > 0
+        success_msg: "'bashrc_path' is valid"
+        fail_msg: |
+          'bashrc_path' must be a non-empty string
+          Got: '{{ bashrc_path | type_debug }}'
+          Length: '{{ bashrc_path | length }}'
+          Value: '{{ bashrc_path | to_nice_yaml }}'
+
+
+- name: "Configure bash"
+  tags: ["bash"]
+  block:
+    - name: "Configure bash: bashrc settings"
+      ansible.builtin.blockinfile:
+        path: "{{ bashrc_path | default('/etc/bash.bashrc') }}"
+        block: |
+          export HISTSIZE={{ bash_config.histsize | default('50000') }}
+          export HISTFILESIZE={{ bash_config.histfilesize | default('100000') }}
+          export HISTTIMEFORMAT="{{ bash_config.histtimeformat | default('%h %d %H:%M:%S ') }}"
+          PROMPT_COMMAND="{{ bash_config.prompt_command | default('history -a') }}"
+        create: true
+        backup: true
+        mode: "0644"
+        owner: "root"
+        group: "root"
+
+    - name: "Configure bash: verify config"
+      block:
+        - name: "Configure bash: verify config: check syntax"
+          ansible.builtin.command: "bash -n {{ bashrc_path | default('/etc/bash.bashrc') }}"
+          register: cmd_bashrc_config
+          changed_when: false
+          failed_when: cmd_bashrc_config.rc != 0
+          check_mode: true
+
+        - name: "Configure bash: verify config: debug"
+          ansible.builtin.debug:
+            msg: "{{ cmd_bashrc_config.stdout | default('No output') }}"
+          when: debug | default(false) | bool

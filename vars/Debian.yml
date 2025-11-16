@@ -1,0 +1,61 @@
+---
+base_packages:
+  # base utils
+  - sudo
+  - bash-completion
+  - less
+  - jq
+  - curl
+  - wget
+  - gnupg2
+  - openssh-server
+  # system utils
+  - vim
+  - ca-certificates
+  - logrotate
+  - chrony
+  # netwok utils
+  - iproute2
+  - tcpdump
+  - nmap
+  - traceroute
+  # disk utils
+  - tree
+  - unzip
+  - tar
+  - rsync
+  - parted
+  - lvm2
+  # monitroing utils
+  - sysstat
+  - strace
+  - lsof
+  - htop
+  - iotop
+  - iftop
+  - smem
+  # security
+  - apt-transport-https
+  - unattended-upgrades
+
+unattended_upgrades:
+  # 20auto-upgrades
+  enabled: 1
+  update_package_lists: 1
+  download_upgradeable_packages: 1
+  autoclean_interval: 7
+  random_sleep: 900
+  # 50unattended-upgrades
+  skip_on_battery: false
+  remove_unused_dependencies: true
+  remove_unused_kernel: false
+  auto_fix_dpkg: true
+  minimal_steps: true
+  auto_reboot: false
+  reboot_time: "02:00"
+  allow_downgrades: false
+  mail: "root@localhost"
+  mail_only_error: true
+  blacklist_packages:
+    - "linux-image"
+    - "linux-headers"

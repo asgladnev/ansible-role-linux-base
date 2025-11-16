@@ -1,0 +1,51 @@
+---
+- name: "Validation"
+  tags: [always]
+  block:
+    - name: "Validation: ntp_pools"
+      ansible.builtin.assert:
+        that:
+          - ntp_pools is defined
+          - ntp_pools | length > 0
+          - ntp_pools is iterable
+        success_msg: "'ntp_pools' is valid"
+        fail_msg: |
+          'ntp_pools' must be a non-empty list
+          Got: '{{ ntp_pools | type_debug }}'
+          Length: '{{ ntp_pools | length }}'
+          Value: '{{ ntp_pools | to_nice_yaml }}'
+
+
+- name: "Configure chrony"
+  tags: [chrony]
+  block:
+    - name: "Configure chrony: template"
+      ansible.builtin.template:
+        src: "chrony/chrony.conf.j2"
+        dest: "/etc/chrony/chrony.conf"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+      notify: "chrony.service configuration changed"
+
+    - name: "Configure chrony: verify config"
+      block:
+        - name: "Configure chrony: verify config: syntax"
+          ansible.builtin.command: "chronyd -Q -d -n"
+          register: cmd_chronyd_config
+          changed_when: false
+          failed_when: cmd_chronyd_config.rc != 0
+          check_mode: true
+
+        - name: "Configure chrony: verify config: chronyc sources"
+          ansible.builtin.command: "chronyc sources"
+          register: cmd_chrony_sources
+          changed_when: false
+          failed_when: cmd_chrony_sources.rc != 0
+
+        - name: "Configure chrony: verify config: debug"
+          ansible.builtin.debug:
+            msg:
+              - "{{ cmd_chronyd_config.stdout | default('No output') }}"
+              - "{{ cmd_chrony_sources.stdout | default('No output') }}"
+          when: debug | default(false) | bool
