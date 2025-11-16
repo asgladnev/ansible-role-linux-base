@@ -1,0 +1,16 @@
+name: Check ansible repo
+on:
+  push:
+
+jobs:
+  validate:
+    name: Validate Ansible
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        id: pull
+        uses: actions/checkout@v4
+
+      - name: Run ansible-lint
+        id: ansible-lint
+        uses: ansible/ansible-lint@v6.22.2
