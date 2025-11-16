@@ -1,0 +1,28 @@
+---
+galaxy_info:
+  author: Alexander Gladnev
+  namespace: asgladnev
+  role_name: linux_base
+  description: Base Linux hardening & configuration role (sysctl, SSH, chrony, unattended-upgrades)
+
+  # https://spdx.org/licenses/
+  license: MIT
+
+  min_ansible_version: "2.15"
+
+  platforms:
+    - name: Debian
+      versions:
+        - all
+
+  galaxy_tags:
+    - linux
+    - base
+    - ssh
+    - security
+    - sysctl
+    - chrony
+    - unattendedupgrades
+    - debian
+
+dependencies: []

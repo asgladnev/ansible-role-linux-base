@@ -1,0 +1,67 @@
+---
+debug: false
+
+# Bash path
+bashrc_path: "/etc/bash.bashrc"
+# Bash config for {{ bashrc_path }}
+bash_config:
+  histsize: 50000
+  histfilesize: 100000
+  histtimeformat: "%h %d %H:%M:%S "
+  prompt_command: "history -a"
+
+# Chrony ntp servers pools
+ntp_pools:
+  - 0.ru.pool.ntp.org
+  - 1.ru.pool.ntp.org
+  - 2.ru.pool.ntp.org
+
+# SSH configuration settings
+sshd_config:
+  # Basic settings
+  port: 22
+  # Logging
+  log_level: "VERBOSE"
+  # Authentication
+  login_grace_time: "45s"
+  permit_root_login: false
+  max_auth_tries: 6
+  password_authentication: false
+  interactive_authentication: false
+  pubkey_authentication: true
+  # Security
+  authentication_methods: "password"
+  use_pam: true
+  x11_forwarding: false
+  tcp_keep_alive: false
+  print_last_log: true
+  allow_tcp_forwarding: true
+  allow_agent_forwarding: true
+  strict_mode: true
+  # Connection settings
+  max_sessions: 10
+  client_alive_interval: 600
+  client_alive_count_max: 10
+  max_startups: "10:30:60"
+
+# Sysctl settings
+sysctl_settings:
+  kernel.kptr_restrict: 1
+  kernel.dmesg_restrict: 1
+  kernel.randomize_va_space: 2
+  dev.tty.ldisc_autoload: 0
+  vm.mmap_min_addr: 65536
+  fs.protected_symlinks: 1
+  fs.protected_hardlinks: 1
+  fs.protected_fifos: 1
+  fs.protected_regular: 2
+  fs.suid_dumpable: 0
+  net.ipv4.conf.all.accept_redirects: 0
+  net.ipv4.conf.default.accept_redirects: 0
+  net.ipv6.conf.all.accept_redirects: 0
+  net.ipv6.conf.default.accept_redirects: 0
+  net.ipv4.conf.all.accept_source_route: 0
+  net.ipv6.conf.all.accept_source_route: 0
+  net.ipv4.icmp_echo_ignore_broadcasts: 1
+  net.ipv4.icmp_ignore_bogus_error_responses: 1
+  net.ipv4.tcp_syncookies: 1

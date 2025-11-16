@@ -1,0 +1,37 @@
+---
+- name: "Verify Linux system"
+  tags: [always]
+  ansible.builtin.assert:
+    that:
+      - ansible_system is defined
+      - ansible_system == "Linux"
+    success_msg: "Linux system detected"
+    fail_msg: "This role only supports Linux systems"
+
+- name: "Load OS-specific variables"
+  tags: [always]
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+
+- name: "Install base packages"
+  tags: [always, packages, apt, dnf]
+  ansible.builtin.include_tasks: "packages.yml"
+
+- name: "Configure bash"
+  tags: [bash]
+  ansible.builtin.include_tasks: "bash.yml"
+
+- name: "Configure chrony"
+  tags: [chrony]
+  ansible.builtin.include_tasks: "chrony.yml"
+
+- name: "Configure SSHd"
+  tags: [sshd, security]
+  ansible.builtin.include_tasks: "sshd.yml"
+
+- name: "Configure sysctl"
+  tags: [sysctl, security]
+  ansible.builtin.include_tasks: "sysctl.yml"
+
+- name: "Configure updates"
+  tags: [update, security]
+  ansible.builtin.include_tasks: "updates.yml"
